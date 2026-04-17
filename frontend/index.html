@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Trading Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-900 text-white min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+
+        <!-- Header -->
+        <h1 class="text-3xl font-bold text-center mb-4">📈 Real-Time Trading Dashboard</h1>
+
+        <div class="text-center mb-6">
+            <span id="status" class="px-3 py-1 bg-red-500 rounded">Disconnected</span>
+            <span class="ml-4">Updates: <span id="count">0</span></span>
+        </div>
+
+        <!-- Cards -->
+        <div class="grid grid-cols-3 gap-4">
+            <div class="bg-gray-800 p-4 rounded">
+                <h2>Price</h2>
+                <p id="price">$--</p>
+                <p id="symbol">--</p>
+            </div>
+
+            <div class="bg-gray-800 p-4 rounded">
+                <h2>Balance</h2>
+                <p id="balance">$--</p>
+            </div>
+
+            <div class="bg-gray-800 p-4 rounded">
+                <h2>Volume</h2>
+                <p id="volume">--</p>
+            </div>
+        </div>
+
+        <!-- Updates -->
+        <div class="mt-6 bg-gray-800 p-4 rounded">
+            <h2>📊 Updates</h2>
+            <div id="updates"></div>
+        </div>
+
+    </div>
+
+    <script>
+        let ws;
+        let count = 0;
+
+        function connect() {
+            ws = new WebSocket("ws://localhost:8001/ws"); // ✅ FIXED PORT
+
+            ws.onopen = () => {
+                document.getElementById("status").textContent = "Connected";
+                document.getElementById("status").className = "px-3 py-1 bg-green-500 rounded";
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+
+                count++;
+                document.getElementById("count").textContent = count;
+
+                document.getElementById("price").textContent = "$" + data.price;
+                document.getElementById("symbol").textContent = data.symbol;
+                document.getElementById("balance").textContent = "$" + data.balance;
+                document.getElementById("volume").textContent = data.volume;
+
+                const updates = document.getElementById("updates");
+
+                const div = document.createElement("div");
+                div.textContent = `${data.symbol} - $${data.price}`;
+                updates.prepend(div);
+            };
+
+            ws.onclose = () => {
+                document.getElementById("status").textContent = "Disconnected";
+                document.getElementById("status").className = "px-3 py-1 bg-red-500 rounded";
+
+                setTimeout(connect, 3000);
+            };
+
+            ws.onerror = () => {
+                console.log("WebSocket error");
+            };
+        }
+
+        connect();
+    </script>
+
+</body>
+</html>
