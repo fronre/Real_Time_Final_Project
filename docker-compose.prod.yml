@@ -1,0 +1,111 @@
+version: '3.8'
+
+services:
+  # C Bot - Production Configuration
+  bot:
+    build:
+      context: ./bot
+      dockerfile: Dockerfile
+    container_name: trading-bot-prod
+    ports:
+      - "8080:8080"
+    networks:
+      - trading-network
+    restart: always
+    healthcheck:
+      test: ["CMD", "sh", "-c", "nc -z localhost 8080 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    environment:
+      - TZ=UTC
+      - LOG_LEVEL=INFO
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+        reservations:
+          memory: 128M
+          cpus: '0.25'
+    labels:
+      - "com.docker.compose.service=bot"
+      - "description=Market Data Generator - Production"
+
+  # Python Server - Production Configuration
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: trading-server-prod
+    ports:
+      - "8000:8000"
+    networks:
+      - trading-network
+    depends_on:
+      bot:
+        condition: service_healthy
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    environment:
+      - BOT_HOST=bot
+      - BOT_PORT=8080
+      - TZ=UTC
+      - LOG_LEVEL=WARNING
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+        reservations:
+          memory: 256M
+          cpus: '0.5'
+    labels:
+      - "com.docker.compose.service=server"
+      - "description=Trading Engine - Production"
+
+  # Frontend - Production Configuration
+  frontend:
+    image: nginx:alpine
+    container_name: trading-frontend-prod
+    ports:
+      - "3000:80"
+    networks:
+      - trading-network
+    depends_on:
+      server:
+        condition: service_healthy
+    restart: always
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    environment:
+      - TZ=UTC
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.25'
+        reservations:
+          memory: 64M
+          cpus: '0.1'
+    labels:
+      - "com.docker.compose.service=frontend"
+      - "description=Web Dashboard - Production"
+
+networks:
+  trading-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  frontend-data:
+    driver: local

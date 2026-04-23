@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Real-Time Trading System - OPEN NOW</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #1a1a1a; color: white; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #4CAF50; }
+        .info { background: #2196F3; }
+        .warning { background: #ff9800; }
+        .error { background: #f44336; }
+        .data { background: #333; padding: 15px; border-radius: 5px; font-family: monospace; white-space: pre-wrap; }
+        button { padding: 10px 20px; margin: 5px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #45a049; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Real-Time Trading System - Status</h1>
+        
+        <div id="server_status" class="status info">Checking server...</div>
+        <div id="data_status" class="status info">Waiting for data...</div>
+        
+        <h2>📊 Live Market Data</h2>
+        <div id="market_data" class="data">Loading...</div>
+        
+        <h2>🎯 Quick Actions</h2>
+        <button onclick="openDashboard()">Open Professional Dashboard</button>
+        <button onclick="openSimple()">Open Simple Dashboard</button>
+        <button onclick="openAPI()">Open Raw API Data</button>
+        <button onclick="refreshData()">Refresh Data</button>
+        
+        <h2>📋 System Info</h2>
+        <div class="data">
+            Server: http://localhost:8001
+            Algorithm: EDF (Earliest Deadline First)
+            Type: Soft Real-Time System
+            Precision: Microseconds (μs)
+            Assets: 10 Digital Assets
+        </div>
+    </div>
+
+    <script>
+        let updateInterval;
+        
+        async function checkServer() {
+            try {
+                const response = await fetch('http://localhost:8001/health');
+                const data = await response.json();
+                
+                document.getElementById('server_status').className = 'status success';
+                document.getElementById('server_status').innerHTML = '✅ Server Online: ' + data.service;
+                
+                return true;
+            } catch (error) {
+                document.getElementById('server_status').className = 'status error';
+                document.getElementById('server_status').innerHTML = '❌ Server Offline: ' + error.message;
+                return false;
+            }
+        }
+        
+        async function loadMarketData() {
+            try {
+                const response = await fetch('http://localhost:8001/api/market-data');
+                const data = await response.json();
+                
+                document.getElementById('data_status').className = 'status success';
+                document.getElementById('data_status').innerHTML = '✅ Live Data Received';
+                
+                // Format the data nicely
+                const formattedData = `
+📈 Market Data:
+   Symbol: ${data.data.symbol}
+   Price: $${data.data.price.toFixed(6)}
+   Volume: ${data.data.volume.toLocaleString()}
+   Timestamp: ${data.data.timestamp_sec}.${data.data.timestamp_usec}
+   Volatility: ${(data.data.volatility * 100).toFixed(1)}%
+   Trend: ${(data.data.trend * 100).toFixed(1)}%
+
+💰 Trading Stats:
+   Balance: $${data.trading_stats.balance.toFixed(2)}
+   Total P&L: $${data.trading_stats.total_pnl.toFixed(2)}
+   Trade Count: ${data.trading_stats.trade_count}
+   Active Positions: ${data.trading_stats.active_positions}
+   Pending Tasks: ${data.trading_stats.pending_tasks || 0}
+
+⚡ System Performance:
+   Deadline Miss Rate: ${((data.system_performance?.deadline_miss_rate || 0) * 100).toFixed(2)}%
+   Avg Execution Time: ${data.system_performance?.avg_execution_time_ms || 0}ms
+                `;
+                
+                document.getElementById('market_data').textContent = formattedData;
+                
+            } catch (error) {
+                document.getElementById('data_status').className = 'status error';
+                document.getElementById('data_status').innerHTML = '❌ Data Error: ' + error.message;
+                document.getElementById('market_data').textContent = 'Error loading data: ' + error.message;
+            }
+        }
+        
+        function openDashboard() {
+            window.open('realtime_dashboard.html', '_blank');
+        }
+        
+        function openSimple() {
+            window.open('index_simple.html', '_blank');
+        }
+        
+        function openAPI() {
+            window.open('http://localhost:8001/api/market-data', '_blank');
+        }
+        
+        function refreshData() {
+            loadMarketData();
+        }
+        
+        // Auto-update every 2 seconds
+        function startAutoUpdate() {
+            checkServer();
+            loadMarketData();
+            updateInterval = setInterval(() => {
+                checkServer();
+                loadMarketData();
+            }, 2000);
+        }
+        
+        // Start when page loads
+        window.onload = function() {
+            startAutoUpdate();
+            console.log('🚀 Real-Time Trading System Monitor Started');
+        };
+        
+        // Cleanup when page closes
+        window.onbeforeunload = function() {
+            if (updateInterval) {
+                clearInterval(updateInterval);
+            }
+        };
+    </script>
+</body>
+</html>

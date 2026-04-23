@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDF Trading Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        }
+        .card {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border: 1px solid #475569;
+            backdrop-filter: blur(10px);
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            border: 1px solid #374151;
+        }
+        .edf-success { color: #10b981; }
+        .edf-missed { color: #ef4444; }
+        .edf-pending { color: #f59e0b; }
+        .pulse-green { animation: pulse-green 2s infinite; }
+        .pulse-red { animation: pulse-red 2s infinite; }
+        @keyframes pulse-green {
+            0%, 100% { background-color: rgb(16, 185, 129); }
+            50% { background-color: rgb(74, 222, 128); }
+        }
+        @keyframes pulse-red {
+            0%, 100% { background-color: rgb(239, 68, 68); }
+            50% { background-color: rgb(248, 113, 113); }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-900 text-white min-h-screen p-4">
+    <div class="max-w-7xl mx-auto">
+
+        <!-- Header -->
+        <div class="mb-6">
+            <h1 class="text-4xl font-bold text-center mb-2 bg-gradient-to-r from-blue-400 to-green-400 bg-clip-text text-transparent">
+                🎯 EDF Algorithm Trading Dashboard
+            </h1>
+            <div class="flex justify-center space-x-6 text-sm text-gray-400">
+                <span>Earliest Deadline First Algorithm</span>
+                <span>Real-Time System</span>
+                <span>Hard Deadlines</span>
+            </div>
+        </div>
+
+        <!-- EDF Stats Cards -->
+        <div class="grid grid-cols-4 gap-4 mb-6">
+            <div class="stat-card p-4 rounded-lg shadow-lg">
+                <h3 class="text-gray-400 text-sm mb-1">🎯 EDF Success Rate</h3>
+                <p id="edf_success_rate" class="text-3xl font-bold text-green-400">--%</p>
+                <p class="text-xs text-gray-500 mt-1">Tasks completed on time</p>
+            </div>
+            <div class="stat-card p-4 rounded-lg shadow-lg">
+                <h3 class="text-gray-400 text-sm mb-1">🚨 Missed Deadlines</h3>
+                <p id="missed_deadlines" class="text-3xl font-bold text-red-400">0</p>
+                <p class="text-xs text-gray-500 mt-1">Tasks that missed deadline</p>
+            </div>
+            <div class="stat-card p-4 rounded-lg shadow-lg">
+                <h3 class="text-gray-400 text-sm mb-1">📋 Queue Size</h3>
+                <p id="queue_size" class="text-3xl font-bold text-yellow-400">0</p>
+                <p class="text-xs text-gray-500 mt-1">Tasks waiting execution</p>
+            </div>
+            <div class="stat-card p-4 rounded-lg shadow-lg">
+                <h3 class="text-gray-400 text-sm mb-1">⚡ Total Tasks</h3>
+                <p id="total_tasks" class="text-3xl font-bold text-blue-400">0</p>
+                <p class="text-xs text-gray-500 mt-1">All EDF tasks processed</p>
+            </div>
+        </div>
+
+        <!-- Trading Stats -->
+        <div class="grid grid-cols-4 gap-4 mb-6">
+            <div class="stat-card p-4 rounded-lg shadow-lg">
+                <h3 class="text-gray-400 text-sm mb-1">💰 Balance</h3>
+                <p id="balance" class="text-2xl font-bold text-green-400">$10,000.00</p>
+                <p class="text-xs text-gray-500 mt-1">Available funds</p>
+            </div>
+            <div class="stat-card p-4 rounded-lg shadow-lg">
+                <h3 class="text-gray-400 text-sm mb-1">🤝 Trade Count</h3>
+                <p id="trade_count" class="text-2xl font-bold text-blue-400">0</p>
+                <p class="text-xs text-gray-500 mt-1">Completed trades</p>
+            </div>
+            <div class="stat-card p-4 rounded-lg shadow-lg">
+                <h3 class="text-gray-400 text-sm mb-1">📈 Total P&L</h3>
+                <p id="total_pnl" class="text-2xl font-bold text-purple-400">$0.00</p>
+                <p class="text-xs text-gray-500 mt-1">Profit/Loss</p>
+            </div>
+            <div class="stat-card p-4 rounded-lg shadow-lg">
+                <h3 class="text-gray-400 text-sm mb-1">🏪 Active Positions</h3>
+                <p id="active_positions" class="text-2xl font-bold text-yellow-400">0</p>
+                <p class="text-xs text-gray-500 mt-1">Open positions</p>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="grid grid-cols-2 gap-6 mb-6">
+            <!-- EDF Event Log -->
+            <div class="col-span-1">
+                <div class="card p-4 rounded-lg shadow-xl">
+                    <h3 class="text-lg font-bold mb-4 text-blue-300">📋 EDF Event Log</h3>
+                    <div id="edf_log" class="space-y-2 max-h-96 overflow-y-auto">
+                        <p class="text-gray-400 text-sm">Waiting for EDF events...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Simple Price Chart -->
+            <div class="col-span-1">
+                <div class="card p-4 rounded-lg shadow-xl">
+                    <h3 class="text-lg font-bold mb-4 text-blue-300">📈 Price Chart</h3>
+                    <canvas id="priceChart" width="400" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Current Asset Info -->
+        <div class="card p-4 rounded-lg shadow-xl mb-6">
+            <h3 class="text-lg font-bold mb-4 text-blue-300">🪙 Current Asset Information</h3>
+            <div class="grid grid-cols-4 gap-4">
+                <div class="bg-gray-800/50 p-3 rounded">
+                    <p class="text-gray-400 text-sm">Symbol</p>
+                    <p id="symbol" class="text-xl font-bold text-green-400">--</p>
+                </div>
+                <div class="bg-gray-800/50 p-3 rounded">
+                    <p class="text-gray-400 text-sm">Price</p>
+                    <p id="price" class="text-xl font-bold text-white">$--</p>
+                </div>
+                <div class="bg-gray-800/50 p-3 rounded">
+                    <p class="text-gray-400 text-sm">Volume</p>
+                    <p id="volume" class="text-lg text-blue-300">--</p>
+                </div>
+                <div class="bg-gray-800/50 p-3 rounded">
+                    <p class="text-gray-400 text-sm">Timestamp</p>
+                    <p id="timestamp" class="text-sm text-gray-300">--</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status -->
+        <div class="mt-6 text-center">
+            <span id="status" class="px-4 py-2 bg-red-500 rounded-full text-sm font-bold">غير متصل</span>
+            <span class="ml-4 text-sm text-gray-400">Updates: <span id="count" class="font-bold text-green-400">0</span></span>
+        </div>
+
+    </div>
+
+    <script>
+        let ws;
+        let count = 0;
+        let priceChart;
+        let edfEventCount = 0;
+
+        // Initialize Simple Chart
+        function initChart() {
+            const ctx = document.getElementById('priceChart').getContext('2d');
+            priceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Price',
+                        data: [],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.1,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 500
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: 'rgba(255, 255, 255, 0.7)' }
+                        },
+                        y: {
+                            display: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: 'rgba(255, 255, 255, 0.7)' }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: 'rgba(255, 255, 255, 0.9)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function formatTimestamp(sec, usec) {
+            const date = new Date(sec * 1000);
+            return date.toLocaleTimeString('ar-SA');
+        }
+
+        function updateChart(symbol, price, timestamp) {
+            if (!priceChart) return;
+
+            const label = formatTimestamp(timestamp, 0);
+
+            // Keep only last 20 data points
+            if (priceChart.data.labels.length > 20) {
+                priceChart.data.labels.shift();
+                priceChart.data.datasets[0].data.shift();
+            }
+
+            priceChart.data.labels.push(label);
+            priceChart.data.datasets[0].data.push(price);
+            priceChart.update();
+        }
+
+        function addEDFEvent(event) {
+            const logContainer = document.getElementById('edf_log');
+            const div = document.createElement('div');
+            
+            const timestamp = new Date(event.timestamp * 1000).toLocaleTimeString('ar-SA');
+            const eventClass = event.event_type === 'EXECUTED' ? 'edf-success' : 
+                               event.event_type === 'MISSED_DEADLINE' ? 'edf-missed' : 'edf-pending';
+            
+            div.className = `text-sm p-2 bg-gray-800/50 rounded border-l-4 ${
+                event.event_type === 'EXECUTED' ? 'border-green-500' : 'border-red-500'
+            }`;
+            
+            div.innerHTML = `
+                <div class="flex justify-between items-center">
+                    <span class="${eventClass} font-bold">${event.event_type}</span>
+                    <span class="text-gray-400 text-xs">${timestamp}</span>
+                </div>
+                <div class="text-xs text-gray-300 mt-1">
+                    Task #${event.task_id} - ${event.task_type} ${event.symbol}
+                </div>
+            `;
+            
+            logContainer.prepend(div);
+            
+            // Keep only last 10 events
+            while (logContainer.children.length > 10) {
+                logContainer.removeChild(logContainer.lastChild);
+            }
+        }
+
+        function connect() {
+            ws = new WebSocket("ws://localhost:8000");
+
+            ws.onopen = () => {
+                document.getElementById("status").textContent = "متصل";
+                document.getElementById("status").className = "px-4 py-2 bg-green-500 rounded-full text-sm font-bold pulse-green";
+                console.log("Connected to EDF trading server");
+            };
+
+            ws.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                
+                count++;
+                document.getElementById("count").textContent = count;
+
+                if (message.type === "market_data") {
+                    const data = message.data;
+                    const stats = message.trading_stats;
+                    const edf_stats = message.edf_stats;
+
+                    // Update asset info
+                    document.getElementById("symbol").textContent = data.symbol;
+                    document.getElementById("price").textContent = "$" + data.price.toFixed(2);
+                    document.getElementById("volume").textContent = data.volume.toLocaleString();
+                    document.getElementById("timestamp").textContent = formatTimestamp(data.timestamp_sec, data.timestamp_usec);
+
+                    // Update trading stats
+                    document.getElementById("balance").textContent = "$" + stats.balance.toFixed(2);
+                    document.getElementById("total_pnl").textContent = "$" + stats.total_pnl.toFixed(2);
+                    document.getElementById("trade_count").textContent = stats.trade_count;
+                    document.getElementById("active_positions").textContent = stats.active_positions;
+
+                    // Update EDF stats
+                    if (edf_stats) {
+                        document.getElementById("edf_success_rate").textContent = edf_stats.success_rate.toFixed(1) + "%";
+                        document.getElementById("missed_deadlines").textContent = edf_stats.missed_deadlines;
+                        document.getElementById("queue_size").textContent = edf_stats.queue_size;
+                        document.getElementById("total_tasks").textContent = edf_stats.total_tasks;
+                        
+                        // Change colors based on performance
+                        const successElement = document.getElementById("edf_success_rate");
+                        if (edf_stats.success_rate >= 90) {
+                            successElement.className = "text-3xl font-bold text-green-400";
+                        } else if (edf_stats.success_rate >= 70) {
+                            successElement.className = "text-3xl font-bold text-yellow-400";
+                        } else {
+                            successElement.className = "text-3xl font-bold text-red-400";
+                        }
+                    }
+
+                    // Update chart
+                    updateChart(data.symbol, data.price, data.timestamp_sec);
+                }
+                else if (message.type === "edf_event") {
+                    const event = message.data;
+                    addEDFEvent(event);
+                    edfEventCount++;
+                }
+            };
+
+            ws.onclose = () => {
+                document.getElementById("status").textContent = "غير متصل";
+                document.getElementById("status").className = "px-4 py-2 bg-red-500 rounded-full text-sm font-bold pulse-red";
+                setTimeout(connect, 3000);
+            };
+
+            ws.onerror = (error) => {
+                console.error("WebSocket error:", error);
+            };
+        }
+
+        // Initialize
+        initChart();
+        connect();
+    </script>
+
+</body>
+</html>

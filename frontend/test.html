@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Page</title>
+</head>
+<body>
+    <h1>Test Page - If you see this, browser works!</h1>
+    <p>Time: <span id="time"></span></p>
+    
+    <script>
+        document.getElementById('time').textContent = new Date().toLocaleString();
+        
+        // Test API connection
+        fetch('http://localhost:8001/health')
+            .then(response => response.json())
+            .then(data => {
+                document.body.innerHTML += '<h2>API Connected: ' + JSON.stringify(data) + '</h2>';
+            })
+            .catch(error => {
+                document.body.innerHTML += '<h2>API Error: ' + error + '</h2>';
+            });
+    </script>
+</body>
+</html>

@@ -3,84 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digital Asset Trading Dashboard - EDF Algorithm</title>
+    <title>🚀 Dynamic Trading Dashboard - EDF Algorithm</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @keyframes pulse-green {
+            0%, 100% { background-color: rgb(34, 197, 94); }
+            50% { background-color: rgb(74, 222, 128); }
+        }
+        @keyframes pulse-red {
+            0%, 100% { background-color: rgb(239, 68, 68); }
+            50% { background-color: rgb(248, 113, 113); }
+        }
+        .pulse-green { animation: pulse-green 2s infinite; }
+        .pulse-red { animation: pulse-red 2s infinite; }
+        .glow-green { box-shadow: 0 0 20px rgba(34, 197, 94, 0.5); }
+        .glow-red { box-shadow: 0 0 20px rgba(239, 68, 68, 0.5); }
+    </style>
 </head>
 
 <body class="bg-gray-900 text-white min-h-screen">
-    <div class="container mx-auto px-4 py-8">
+    <div class="container mx-auto px-4 py-6">
 
         <!-- Header -->
         <div class="text-center mb-6">
-            <h1 class="text-4xl font-bold mb-2">⚡ Digital Asset Trading Dashboard</h1>
+            <h1 class="text-4xl font-bold mb-2 bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
+                ⚡ Dynamic Trading Dashboard
+            </h1>
             <p class="text-gray-400">Real-Time Trading with EDF Scheduling Algorithm</p>
-            <div class="mt-4">
-                <span id="status" class="px-3 py-1 bg-red-500 rounded-full text-sm">Disconnected</span>
-                <span class="ml-4 text-sm">Updates: <span id="count" class="font-bold">0</span></span>
-                <span class="ml-4 text-sm">Latency: <span id="latency" class="font-bold">--</span>μs</span>
+            <div class="mt-4 flex justify-center items-center space-x-4">
+                <span id="status" class="px-4 py-2 bg-red-500 rounded-full text-sm font-bold">Disconnected</span>
+                <span class="text-sm">Updates: <span id="count" class="font-bold text-green-400">0</span></span>
+                <span class="text-sm">Latency: <span id="latency" class="font-bold text-yellow-400">--</span>μs</span>
             </div>
         </div>
 
         <!-- Trading Stats -->
         <div class="grid grid-cols-5 gap-4 mb-6">
-            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
-                <h3 class="text-sm text-gray-400 mb-1">Balance</h3>
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 hover:border-green-500 transition-colors">
+                <h3 class="text-sm text-gray-400 mb-1">💰 Balance</h3>
                 <p id="balance" class="text-2xl font-bold text-green-400">$10,000.00</p>
+                <p class="text-xs text-gray-500 mt-1">Available Funds</p>
             </div>
-            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
-                <h3 class="text-sm text-gray-400 mb-1">Total P&L</h3>
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 hover:border-blue-500 transition-colors">
+                <h3 class="text-sm text-gray-400 mb-1">📈 Total P&L</h3>
                 <p id="total_pnl" class="text-2xl font-bold text-blue-400">$0.00</p>
+                <p class="text-xs text-gray-500 mt-1">Profit/Loss</p>
             </div>
-            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
-                <h3 class="text-sm text-gray-400 mb-1">Trade Count</h3>
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 hover:border-yellow-500 transition-colors">
+                <h3 class="text-sm text-gray-400 mb-1">🤝 Trade Count</h3>
                 <p id="trade_count" class="text-2xl font-bold text-yellow-400">0</p>
+                <p class="text-xs text-gray-500 mt-1">Total Trades</p>
             </div>
-            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
-                <h3 class="text-sm text-gray-400 mb-1">EDF Success Rate</h3>
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 hover:border-purple-500 transition-colors">
+                <h3 class="text-sm text-gray-400 mb-1">⏰ EDF Success Rate</h3>
                 <p id="edf_success_rate" class="text-2xl font-bold text-purple-400">--%</p>
+                <p class="text-xs text-gray-500 mt-1">Task Completion</p>
             </div>
-            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
-                <h3 class="text-sm text-gray-400 mb-1">Missed Deadlines</h3>
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 hover:border-red-500 transition-colors">
+                <h3 class="text-sm text-gray-400 mb-1">🚨 Missed Deadlines</h3>
                 <p id="missed_deadlines" class="text-2xl font-bold text-red-400">0</p>
+                <p class="text-xs text-gray-500 mt-1">Failed Tasks</p>
             </div>
         </div>
 
         <!-- Current Asset Info -->
         <div class="grid grid-cols-3 gap-4 mb-6">
             <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
-                <h3 class="text-sm text-gray-400 mb-1">Current Asset</h3>
-                <p id="symbol" class="text-xl font-bold">--</p>
-                <p id="price" class="text-2xl font-bold text-green-400">$--</p>
-                <div class="mt-2">
-                    <span class="text-xs text-gray-400">Volatility: </span>
-                    <span id="volatility" class="text-xs font-bold">--</span>
-                </div>
-                <div>
-                    <span class="text-xs text-gray-400">Trend: </span>
-                    <span id="trend" class="text-xs font-bold">--</span>
+                <h3 class="text-sm text-gray-400 mb-1">🪙 Current Asset</h3>
+                <p id="symbol" class="text-xl font-bold text-green-400">--</p>
+                <p id="price" class="text-3xl font-bold text-white">$--</p>
+                <div class="mt-2 grid grid-cols-2 gap-2">
+                    <div>
+                        <span class="text-xs text-gray-400">Volatility: </span>
+                        <span id="volatility" class="text-xs font-bold text-yellow-400">--</span>
+                    </div>
+                    <div>
+                        <span class="text-xs text-gray-400">Trend: </span>
+                        <span id="trend" class="text-xs font-bold text-blue-400">--</span>
+                    </div>
                 </div>
             </div>
 
             <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
-                <h3 class="text-sm text-gray-400 mb-1">Volume & Timestamp</h3>
-                <p id="volume" class="text-lg font-bold">--</p>
+                <h3 class="text-sm text-gray-400 mb-1">📊 Volume & Time</h3>
+                <p id="volume" class="text-lg font-bold text-green-400">--</p>
                 <p id="timestamp" class="text-xs text-gray-400 mt-2">--</p>
                 <div class="mt-2">
                     <span class="text-xs text-gray-400">Microseconds: </span>
-                    <span id="timestamp_usec" class="text-xs font-bold">--</span>
+                    <span id="timestamp_usec" class="text-xs font-bold text-yellow-400">--</span>
                 </div>
             </div>
 
             <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
-                <h3 class="text-sm text-gray-400 mb-1">Latest Trading Signal</h3>
+                <h3 class="text-sm text-gray-400 mb-1">🚦 Latest Signal</h3>
                 <div id="latest_signal" class="mt-2">
-                    <p id="signal_symbol" class="text-sm font-bold">--</p>
-                    <p id="signal_type" class="text-lg font-bold">--</p>
+                    <p id="signal_symbol" class="text-sm font-bold text-green-400">--</p>
+                    <p id="signal_type" class="text-2xl font-bold">--</p>
                     <p id="signal_reason" class="text-xs text-gray-400 mt-1">--</p>
                     <div class="mt-2">
                         <span class="text-xs text-gray-400">Confidence: </span>
-                        <span id="signal_confidence" class="text-xs font-bold">--</span>
+                        <span id="signal_confidence" class="text-xs font-bold text-yellow-400">--</span>
                     </div>
                 </div>
             </div>
@@ -130,8 +153,8 @@
         let ws;
         let count = 0;
         let priceChart;
-        let priceData = [];
         let lastUpdateTime = 0;
+        let priceHistory = {};
 
         // Initialize Chart
         function initChart() {
@@ -140,17 +163,14 @@
                 type: 'line',
                 data: {
                     labels: [],
-                    datasets: [{
-                        label: 'Price',
-                        data: [],
-                        borderColor: 'rgb(34, 197, 94)',
-                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
-                        tension: 0.1
-                    }]
+                    datasets: []
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    animation: {
+                        duration: 0
+                    },
                     scales: {
                         x: {
                             display: true,
@@ -180,15 +200,38 @@
         function updateChart(symbol, price, timestamp) {
             if (!priceChart) return;
 
+            // Initialize dataset for this symbol if not exists
+            let dataset = priceChart.data.datasets.find(d => d.label === symbol);
+            if (!dataset) {
+                const colors = {
+                    'BTC': 'rgb(255, 99, 132)',
+                    'ETH': 'rgb(54, 162, 235)',
+                    'USDT': 'rgb(255, 206, 86)',
+                    'PUBG_UC': 'rgb(75, 192, 192)',
+                    'COD_POINTS': 'rgb(153, 102, 255)'
+                };
+                
+                dataset = {
+                    label: symbol,
+                    data: [],
+                    borderColor: colors[symbol] || 'rgb(34, 197, 94)',
+                    backgroundColor: colors[symbol] ? colors[symbol].replace('rgb', 'rgba').replace(')', ', 0.1)') : 'rgba(34, 197, 94, 0.1)',
+                    tension: 0.1,
+                    borderWidth: 2
+                };
+                priceChart.data.datasets.push(dataset);
+            }
+
             const label = formatTimestamp(timestamp, 0);
 
+            // Keep only last 20 data points
             if (priceChart.data.labels.length > 20) {
                 priceChart.data.labels.shift();
-                priceChart.data.datasets[0].data.shift();
+                dataset.data.shift();
             }
 
             priceChart.data.labels.push(label);
-            priceChart.data.datasets[0].data.push(price);
+            dataset.data.push(price);
             priceChart.update('none');
         }
 
@@ -197,8 +240,8 @@
 
             ws.onopen = () => {
                 document.getElementById("status").textContent = "Connected";
-                document.getElementById("status").className = "px-3 py-1 bg-green-500 rounded-full text-sm";
-                console.log("Connected to trading server");
+                document.getElementById("status").className = "px-4 py-2 bg-green-500 rounded-full text-sm font-bold pulse-green";
+                console.log("🟢 Connected to trading server");
             };
 
             ws.onmessage = (event) => {
@@ -218,21 +261,31 @@
                     const data = message.data;
                     const stats = message.trading_stats;
 
-                    // Update asset info
+                    // Update asset info with animations
                     document.getElementById("symbol").textContent = data.symbol;
-                    document.getElementById("price").textContent = "$" + data.price.toFixed(6);
+                    document.getElementById("price").textContent = "$" + data.price.toFixed(2);
                     document.getElementById("volatility").textContent = (data.volatility * 100).toFixed(1) + "%";
                     document.getElementById("trend").textContent = (data.trend * 100).toFixed(1) + "%";
                     document.getElementById("volume").textContent = data.volume.toLocaleString();
                     document.getElementById("timestamp").textContent = formatTimestamp(data.timestamp_sec, data.timestamp_usec);
                     document.getElementById("timestamp_usec").textContent = data.timestamp_usec;
 
-                    // Update trading stats
-                    document.getElementById("balance").textContent = "$" + stats.balance.toFixed(2);
+                    // Update trading stats with color changes
+                    const balanceElement = document.getElementById("balance");
+                    const oldBalance = parseFloat(balanceElement.textContent.replace('$', '').replace(',', ''));
+                    balanceElement.textContent = "$" + stats.balance.toFixed(2);
+                    
+                    // Change color based on profit/loss
+                    if (stats.balance > oldBalance) {
+                        balanceElement.className = "text-2xl font-bold text-green-400";
+                    } else if (stats.balance < oldBalance) {
+                        balanceElement.className = "text-2xl font-bold text-red-400";
+                    }
+
                     document.getElementById("total_pnl").textContent = "$" + stats.total_pnl.toFixed(2);
                     document.getElementById("trade_count").textContent = stats.trade_count;
                     
-                    // Update EDF stats if available
+                    // Update EDF stats
                     if (message.edf_stats) {
                         document.getElementById("edf_success_rate").textContent = message.edf_stats.success_rate.toFixed(1) + "%";
                         document.getElementById("missed_deadlines").textContent = message.edf_stats.missed_deadlines;
@@ -241,11 +294,11 @@
                     // Update chart
                     updateChart(data.symbol, data.price, data.timestamp_sec);
 
-                    // Add to updates
+                    // Add to updates with styling
                     const updates = document.getElementById("updates");
                     const div = document.createElement("div");
-                    div.className = "text-sm py-1 border-b border-gray-700";
-                    div.innerHTML = `<span class="font-bold">${data.symbol}</span> - $${data.price.toFixed(6)} - Vol: ${(data.volatility * 100).toFixed(1)}%`;
+                    div.className = "text-sm py-1 border-b border-gray-700 hover:bg-gray-700 transition-colors";
+                    div.innerHTML = `<span class="font-bold text-green-400">${data.symbol}</span> - $${data.price.toFixed(2)} - Vol: ${(data.volatility * 100).toFixed(1)}% - ${formatTimestamp(data.timestamp_sec, data.timestamp_usec)}`;
                     updates.prepend(div);
 
                     // Keep only last 10 updates
@@ -256,110 +309,61 @@
                 else if (message.type === "trading_signal") {
                     const signal = message.data;
 
-                    // Update latest signal
+                    // Update latest signal with animations
                     document.getElementById("signal_symbol").textContent = signal.symbol;
                     document.getElementById("signal_type").textContent = signal.signal;
-                    document.getElementById("signal_type").className = signal.signal === "BUY" 
-                        ? "text-lg font-bold text-green-400" 
-                        : "text-lg font-bold text-red-400";
+                    
+                    const signalTypeElement = document.getElementById("signal_type");
+                    if (signal.signal === "BUY") {
+                        signalTypeElement.className = "text-2xl font-bold text-green-400 pulse-green";
+                    } else {
+                        signalTypeElement.className = "text-2xl font-bold text-red-400 pulse-red";
+                    }
+                    
                     document.getElementById("signal_reason").textContent = signal.reason;
                     document.getElementById("signal_confidence").textContent = (signal.confidence * 100).toFixed(1) + "%";
 
-                    // Add to updates
+                    // Add to updates with special styling
                     const updates = document.getElementById("updates");
                     const div = document.createElement("div");
-                    div.className = `text-sm py-1 border-b border-gray-700 ${signal.signal === "BUY" ? "text-green-400" : "text-red-400"}`;
-                    div.innerHTML = `<span class="font-bold">${signal.signal}</span> ${signal.quantity} ${signal.symbol} at $${signal.price.toFixed(6)} - ${(signal.confidence * 100).toFixed(1)}% confidence`;
+                    const signalClass = signal.signal === "BUY" ? "text-green-400 bg-green-900/20" : "text-red-400 bg-red-900/20";
+                    div.className = `text-sm py-2 px-2 border-b border-gray-700 ${signalClass} rounded mb-1`;
+                    div.innerHTML = `<span class="font-bold">${signal.signal}</span> ${signal.quantity} ${signal.symbol} at $${signal.price.toFixed(2)} - ${(signal.confidence * 100).toFixed(1)}% confidence`;
                     updates.prepend(div);
                 }
             };
 
             ws.onclose = () => {
                 document.getElementById("status").textContent = "Disconnected";
-                document.getElementById("status").className = "px-3 py-1 bg-red-500 rounded-full text-sm";
+                document.getElementById("status").className = "px-4 py-2 bg-red-500 rounded-full text-sm font-bold pulse-red";
                 document.getElementById("latency").textContent = "--";
 
                 setTimeout(connect, 3000);
             };
 
             ws.onerror = (error) => {
-                console.error("WebSocket error:", error);
+                console.error("🔴 WebSocket error:", error);
             };
-        }
-
-        // Load EDF statistics
-        async function loadEDFStats() {
-            try {
-                const response = await fetch('/edf-stats');
-                const data = await response.json();
-                
-                // Update EDF stats
-                document.getElementById("edf_success_rate").textContent = data.edf_performance.success_rate.toFixed(1) + "%";
-                document.getElementById("missed_deadlines").textContent = data.edf_performance.missed_deadlines;
-                
-                // Update EDF log
-                const edfLog = document.getElementById('edf_log');
-                edfLog.innerHTML = '';
-                
-                if (data.recent_events.length === 0) {
-                    edfLog.innerHTML = '<p class="text-gray-400 text-sm">No EDF events</p>';
-                } else {
-                    data.recent_events.forEach(event => {
-                        const div = document.createElement('div');
-                        div.className = 'text-xs py-1 border-b border-gray-700';
-                        
-                        const timestamp = new Date(event.timestamp * 1000).toLocaleTimeString();
-                        const eventClass = event.event_type === 'EXECUTED' ? 'text-green-400' : 
-                                        event.event_type === 'MISSED_DEADLINE' ? 'text-red-400' : 'text-blue-400';
-                        
-                        div.innerHTML = `<span class="${eventClass}">[${timestamp}] ${event.event_type}</span> - Task #${event.task_id} ${event.task_type} ${event.symbol}`;
-                        edfLog.appendChild(div);
-                    });
-                }
-            } catch (error) {
-                console.error('Error loading EDF stats:', error);
-            }
-        }
-
-        // Load positions data
-        async function loadPositions() {
-            try {
-                const response = await fetch('/positions');
-                const data = await response.json();
-
-                const positionsList = document.getElementById('positions_list');
-                positionsList.innerHTML = '';
-
-                if (Object.keys(data.positions).length === 0) {
-                    positionsList.innerHTML = '<p class="text-gray-400 text-sm">No active positions</p>';
-                } else {
-                    for (const [symbol, position] of Object.entries(data.positions)) {
-                        const div = document.createElement('div');
-                        div.className = 'bg-gray-700 p-2 rounded';
-                        div.innerHTML = `
-                            <div class="flex justify-between">
-                                <span class="font-bold">${symbol}</span>
-                                <span class="text-sm">${position.quantity} units</span>
-                            </div>
-                            <div class="text-xs text-gray-400">
-                                Avg: $${position.avg_price.toFixed(6)} | Cost: $${position.total_cost.toFixed(2)}
-                            </div>
-                        `;
-                        positionsList.appendChild(div);
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading positions:', error);
-            }
         }
 
         // Initialize
         initChart();
         connect();
 
-        // Update positions and EDF stats every 2 seconds
-        setInterval(loadPositions, 2000);
-        setInterval(loadEDFStats, 1000);
+        // Add some visual enhancements
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add hover effects to cards
+            const cards = document.querySelectorAll('.bg-gray-800');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-2px)';
+                    this.style.transition = 'all 0.3s ease';
+                });
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                });
+            });
+        });
     </script>
 
 </body>

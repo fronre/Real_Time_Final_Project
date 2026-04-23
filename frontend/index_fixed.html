@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تداول الأصول الرقمية - الرسم المصلح</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap');
+        body { font-family: 'Tajawal', sans-serif; }
+        .connected { background-color: rgb(34, 197, 94) !important; }
+        .disconnected { background-color: rgb(239, 68, 68) !important; }
+    </style>
+</head>
+
+<body class="bg-gray-900 text-white min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+
+        <!-- Header -->
+        <div class="text-center mb-6">
+            <h1 class="text-4xl font-bold mb-2">⚡ لوحة تداول الأصول الرقمية</h1>
+            <p class="text-gray-400">نظام تداول مباشر مع خوارزمية EDF</p>
+            <div class="mt-4">
+                <span id="status" class="px-3 py-1 disconnected rounded-full text-sm">غير متصل</span>
+                <span class="mr-4 text-sm">التحديثات: <span id="count" class="font-bold">0</span></span>
+                <span class="mr-4 text-sm">زمن الاستجابة: <span id="latency" class="font-bold">--</span>مث</span>
+            </div>
+        </div>
+
+        <!-- Trading Stats -->
+        <div class="grid grid-cols-4 gap-4 mb-6">
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                <h3 class="text-sm text-gray-400 mb-1">الرصيد</h3>
+                <p id="balance" class="text-2xl font-bold text-green-400">$10,000.00</p>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                <h3 class="text-sm text-gray-400 mb-1">إجمالي الربح/خسارة</h3>
+                <p id="total_pnl" class="text-2xl font-bold text-blue-400">$0.00</p>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                <h3 class="text-sm text-gray-400 mb-1">عدد الصفقات</h3>
+                <p id="trade_count" class="text-2xl font-bold text-yellow-400">0</p>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                <h3 class="text-sm text-gray-400 mb-1">المراكز المفتوحة</h3>
+                <p id="active_positions" class="text-2xl font-bold text-purple-400">0</p>
+            </div>
+        </div>
+
+        <!-- Current Asset Info -->
+        <div class="grid grid-cols-3 gap-4 mb-6">
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                <h3 class="text-sm text-gray-400 mb-1">الأصل الحالي</h3>
+                <p id="symbol" class="text-xl font-bold">--</p>
+                <p id="price" class="text-2xl font-bold text-green-400">$--</p>
+                <div class="mt-2">
+                    <span class="text-xs text-gray-400">التقلب: </span>
+                    <span id="volatility" class="text-xs font-bold">--</span>
+                </div>
+                <div>
+                    <span class="text-xs text-gray-400">الاتجاه: </span>
+                    <span id="trend" class="text-xs font-bold">--</span>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                <h3 class="text-sm text-gray-400 mb-1">الحجم والتوقيت</h3>
+                <p id="volume" class="text-lg font-bold">--</p>
+                <p id="timestamp" class="text-xs text-gray-400 mt-2">--</p>
+                <div class="mt-2">
+                    <span class="text-xs text-gray-400">ميكروثانية: </span>
+                    <span id="timestamp_usec" class="text-xs font-bold">--</span>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                <h3 class="text-sm text-gray-400 mb-1">آخر إشارة تداول</h3>
+                <div id="latest_signal" class="mt-2">
+                    <p id="signal_symbol" class="text-sm font-bold">--</p>
+                    <p id="signal_type" class="text-lg font-bold">--</p>
+                    <p id="signal_reason" class="text-xs text-gray-400 mt-1">--</p>
+                    <div class="mt-2">
+                        <span class="text-xs text-gray-400">الثقة: </span>
+                        <span id="signal_confidence" class="text-xs font-bold">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Price Chart -->
+        <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 mb-6">
+            <h3 class="text-lg font-bold mb-4">📈 الرسم البياني المباشر</h3>
+            <canvas id="priceChart" width="400" height="200"></canvas>
+        </div>
+
+        <!-- Asset List -->
+        <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 mb-6">
+            <h3 class="text-lg font-bold mb-4">💰 أسعار الأصول الحالية</h3>
+            <div id="asset_prices" class="grid grid-cols-5 gap-2">
+                <!-- Asset prices will be inserted here -->
+            </div>
+        </div>
+
+        <!-- Server Status -->
+        <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 mb-6">
+            <h3 class="text-lg font-bold mb-4">🔧 حالة السيرفر</h3>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <p class="text-sm text-gray-400">رابط السيرفر:</p>
+                    <p class="font-mono text-xs">http://localhost:8001</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-400">حالة الاتصال:</p>
+                    <p id="server_status" class="font-bold">--</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Updates -->
+        <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+            <h3 class="text-lg font-bold mb-4">📊 آخر التحديثات</h3>
+            <div id="updates" class="space-y-1 max-h-48 overflow-y-auto">
+                <p class="text-gray-400 text-sm">في انتظار البيانات...</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let count = 0;
+        let priceChart;
+        let assetPrices = {};
+        let lastUpdateTime = 0;
+        let isConnected = false;
+
+        // Initialize Chart with fixed scaling
+        function initChart() {
+            const ctx = document.getElementById('priceChart').getContext('2d');
+            priceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'السعر',
+                        data: [],
+                        borderColor: 'rgb(34, 197, 94)',
+                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 3,
+                        pointHoverRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: 'rgba(255, 255, 255, 0.9)' }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: 'white',
+                            bodyColor: 'white',
+                            borderColor: 'rgb(34, 197, 94)',
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { 
+                                color: 'rgba(255, 255, 255, 0.7)',
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        },
+                        y: {
+                            display: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { 
+                                color: 'rgba(255, 255, 255, 0.7)',
+                                callback: function(value) {
+                                    return '$' + value.toFixed(2);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function formatTimestamp(sec, usec) {
+            const date = new Date(sec * 1000);
+            return date.toLocaleTimeString('ar-SA', { 
+                hour: '2-digit', 
+                minute: '2-digit', 
+                second: '2-digit' 
+            });
+        }
+
+        function updateChart(symbol, price, timestamp) {
+            if (!priceChart) return;
+            
+            const label = formatTimestamp(timestamp, 0);
+            
+            // Keep only last 15 data points
+            if (priceChart.data.labels.length >= 15) {
+                priceChart.data.labels.shift();
+                priceChart.data.datasets[0].data.shift();
+            }
+            
+            priceChart.data.labels.push(label);
+            priceChart.data.datasets[0].data.push(price);
+            
+            // Update chart title with current asset
+            priceChart.data.datasets[0].label = `${symbol} - السعر`;
+            
+            // Auto-scale Y axis based on current data
+            if (priceChart.data.datasets[0].data.length > 0) {
+                const prices = priceChart.data.datasets[0].data;
+                const minPrice = Math.min(...prices) * 0.95;
+                const maxPrice = Math.max(...prices) * 1.05;
+                
+                priceChart.options.scales.y.min = minPrice;
+                priceChart.options.scales.y.max = maxPrice;
+            }
+            
+            priceChart.update('none'); // Update without animation for smooth performance
+        }
+
+        function updateAssetPrices(symbol, price) {
+            assetPrices[symbol] = price;
+            
+            const assetContainer = document.getElementById('asset_prices');
+            assetContainer.innerHTML = '';
+            
+            // Sort assets by price
+            const sortedAssets = Object.entries(assetPrices).sort((a, b) => b[1] - a[1]);
+            
+            sortedAssets.forEach(([symbol, price]) => {
+                const div = document.createElement('div');
+                div.className = 'bg-gray-700 p-2 rounded text-center';
+                div.innerHTML = `
+                    <div class="text-xs font-bold">${symbol}</div>
+                    <div class="text-sm text-green-400">$${price.toFixed(4)}</div>
+                `;
+                assetContainer.appendChild(div);
+            });
+        }
+
+        async function fetchMarketData() {
+            try {
+                const startTime = Date.now();
+                const response = await fetch('http://localhost:8001/api/market-data');
+                const endTime = Date.now();
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    processMarketData(data);
+                    
+                    if (!isConnected) {
+                        isConnected = true;
+                        updateConnectionStatus(true);
+                    }
+                    
+                    const latency = endTime - startTime;
+                    document.getElementById("latency").textContent = latency.toFixed(0);
+                    
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                if (isConnected) {
+                    isConnected = false;
+                    updateConnectionStatus(false);
+                }
+            }
+        }
+
+        function updateConnectionStatus(connected) {
+            const statusElement = document.getElementById("status");
+            const serverStatusElement = document.getElementById("server_status");
+            
+            if (connected) {
+                statusElement.textContent = "متصل";
+                statusElement.className = "px-3 py-1 connected rounded-full text-sm";
+                serverStatusElement.textContent = "متصل بالسيرفر";
+                serverStatusElement.className = "font-bold text-green-400";
+            } else {
+                statusElement.textContent = "غير متصل";
+                statusElement.className = "px-3 py-1 disconnected rounded-full text-sm";
+                serverStatusElement.textContent = "فشل الاتصال بالسيرفر";
+                serverStatusElement.className = "font-bold text-red-400";
+            }
+        }
+
+        function processMarketData(message) {
+            const currentTime = Date.now();
+            lastUpdateTime = currentTime;
+
+            count++;
+            document.getElementById("count").textContent = count;
+
+            const data = message.data;
+            const stats = message.trading_stats;
+            
+            // Update asset info
+            document.getElementById("symbol").textContent = data.symbol;
+            document.getElementById("price").textContent = "$" + data.price.toFixed(6);
+            document.getElementById("volatility").textContent = (data.volatility * 100).toFixed(1) + "%";
+            document.getElementById("trend").textContent = (data.trend * 100).toFixed(1) + "%";
+            document.getElementById("volume").textContent = data.volume.toLocaleString('ar-SA');
+            document.getElementById("timestamp").textContent = formatTimestamp(data.timestamp_sec, data.timestamp_usec);
+            document.getElementById("timestamp_usec").textContent = data.timestamp_usec;
+            
+            // Update trading stats
+            document.getElementById("balance").textContent = "$" + stats.balance.toFixed(2);
+            document.getElementById("total_pnl").textContent = "$" + stats.total_pnl.toFixed(2);
+            document.getElementById("trade_count").textContent = stats.trade_count;
+            document.getElementById("active_positions").textContent = stats.active_positions;
+            
+            // Update chart with proper scaling
+            updateChart(data.symbol, data.price, data.timestamp_sec);
+            
+            // Update asset prices list
+            updateAssetPrices(data.symbol, data.price);
+            
+            // Add to updates
+            const updates = document.getElementById("updates");
+            const div = document.createElement("div");
+            div.className = "text-sm py-1 border-b border-gray-700";
+            div.innerHTML = `<span class="font-bold">${data.symbol}</span> - $${data.price.toFixed(6)} - تقلب: ${(data.volatility * 100).toFixed(1)}%`;
+            updates.prepend(div);
+            
+            // Keep only last 10 updates
+            while (updates.children.length > 10) {
+                updates.removeChild(updates.lastChild);
+            }
+        }
+
+        // Initialize
+        initChart();
+        
+        // Start fetching data
+        fetchMarketData();
+        setInterval(fetchMarketData, 2000); // Fetch every 2 seconds for better visualization
+        
+        console.log('🚀 لوحة تداول الأصول الرقمية جاهزة!');
+        console.log('🔗 تحاول الاتصال بالسيرفر: http://localhost:8001');
+        console.log('📈 الرسم البياني مصحح ومعدل!');
+    </script>
+
+</body>
+</html>

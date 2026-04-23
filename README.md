@@ -1,6 +1,16 @@
-# Real-Time Trading Simulation System
+# Real-Time Digital Asset Trading System with EDF Algorithm
 
-A complete real-time trading simulation system with the architecture: **C → Socket → Python → WebSocket → Browser**
+A high-frequency trading simulation system for digital assets with **Earliest Deadline First (EDF)** scheduling and **microsecond timing precision**.
+
+**Architecture**: **C → Socket → Python → WebSocket → Browser**
+
+## 🎯 System Features
+
+- **10 Digital Assets**: BTC, ETH, USDT, Gaming currencies, Subscriptions, NFTs
+- **EDF Scheduling**: Earliest Deadline First algorithm for real-time task management
+- **Microsecond Precision**: High-resolution timing for trading decisions
+- **Advanced Trading Logic**: Moving averages, momentum, and threshold strategies
+- **Real-Time Visualization**: Live charts, trading signals, and performance metrics
 
 ## Architecture Overview
 
@@ -8,7 +18,8 @@ A complete real-time trading simulation system with the architecture: **C → So
 ┌─────────────┐    TCP     ┌─────────────┐    WebSocket    ┌─────────────┐
 │    C Bot    │ ────────►  │  Python     │ ──────────────► │  Browser    │
 │ (Market     │    8080    │  FastAPI     │       8000      │  Dashboard  │
-│  Generator) │            │  Server      │                │             │
+│  Generator) │            │  + EDF       │                │  + Charts   │
+│  + EDF      │            │  + Trading  │                │             │
 └─────────────┘            └─────────────┘                └─────────────┘
 ```
 
@@ -30,44 +41,51 @@ realtimee/
 └── README.md              # This file
 ```
 
-## Quick Start
+## 🚀 Quick Start
 
-### Prerequisites
+### Option 1: Docker (Recommended for Easy Sharing)
 
+**Perfect for sharing with friends!** No technical setup needed.
+
+#### Prerequisites
+- Install Docker Desktop: https://www.docker.com/products/docker-desktop/
+
+#### 3 Commands to Run:
+```bash
+# 1. Open terminal in project folder
+cd Real_Time_Final_Project
+
+# 2. Build and start everything
+docker-compose up --build
+
+# 3. Open browser
+# Go to: http://localhost:3000
+```
+
+That's it! 🎉 The trading dashboard will appear automatically.
+
+### Option 2: Manual Setup (For Development)
+
+#### Prerequisites
 - GCC compiler (for C bot)
 - Python 3.7+ (for FastAPI server)
 - Modern web browser (for frontend)
 
-### Step 1: Build and Run C Bot
-
+#### Step 1: Build and Run C Bot
 ```bash
 cd bot
 make
 ./market_bot
 ```
 
-The bot will:
-- Listen on port 8080 for TCP connections
-- Wait for Python server to connect
-- Generate market data every 1 second
-- Send data in format: `symbol:price:balance:volume:timestamp`
-
-### Step 2: Start Python Server
-
+#### Step 2: Start Python Server
 ```bash
 cd server
 pip install -r requirements.txt
 python main.py
 ```
 
-The server will:
-- Start on http://localhost:8000
-- Automatically connect to C bot (localhost:8080)
-- Listen for WebSocket connections on `/ws`
-- Broadcast market data to connected clients
-
-### Step 3: Open Frontend
-
+#### Step 3: Open Frontend
 ```bash
 cd frontend
 # Open index.html in your browser
@@ -77,12 +95,6 @@ xdg-open index.html  # Linux
 # or
 start index.html  # Windows
 ```
-
-The dashboard will:
-- Connect to WebSocket at `ws://localhost:8000/ws`
-- Display real-time market data
-- Show price changes, balance, and volume
-- Maintain connection status indicator
 
 ## Running Order (Important)
 

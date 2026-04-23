@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  # C Bot - Market Data Generator with EDF
+  bot:
+    build:
+      context: ./bot
+      dockerfile: Dockerfile
+    container_name: trading-bot
+    ports:
+      - "8080:8080"
+    networks:
+      - trading-network
+    restart: unless-stopped
+    environment:
+      - TZ=UTC
+
+  # Python Server - Trading Engine
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: trading-server
+    ports:
+      - "8000:8000"
+    networks:
+      - trading-network
+    depends_on:
+      - bot
+    restart: unless-stopped
+    environment:
+      - BOT_HOST=bot
+      - BOT_PORT=8080
+      - TZ=UTC
+
+  # Frontend - Static Web Server
+  frontend:
+    image: nginx:alpine
+    container_name: trading-frontend
+    ports:
+      - "3000:80"
+    networks:
+      - trading-network
+    depends_on:
+      - server
+    restart: unless-stopped
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    environment:
+      - TZ=UTC
+
+networks:
+  trading-network:
+    driver: bridge

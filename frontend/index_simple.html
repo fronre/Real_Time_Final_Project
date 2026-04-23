@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تداول الأصول الرقمية</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap');
+        body { font-family: 'Tajawal', sans-serif; }
+    </style>
+</head>
+
+<body class="bg-gray-900 text-white min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+
+        <!-- Header -->
+        <div class="text-center mb-6">
+            <h1 class="text-4xl font-bold mb-2">⚡ لوحة تداول الأصول الرقمية</h1>
+            <p class="text-gray-400">نظام تداول مباشر مع خوارزمية EDF</p>
+            <div class="mt-4">
+                <span id="status" class="px-3 py-1 bg-red-500 rounded-full text-sm">غير متصل</span>
+                <span class="mr-4 text-sm">التحديثات: <span id="count" class="font-bold">0</span></span>
+                <span class="mr-4 text-sm">زمن الاستجابة: <span id="latency" class="font-bold">--</span>مث</span>
+            </div>
+        </div>
+
+        <!-- Trading Stats -->
+        <div class="grid grid-cols-4 gap-4 mb-6">
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                <h3 class="text-sm text-gray-400 mb-1">الرصيد</h3>
+                <p id="balance" class="text-2xl font-bold text-green-400">$10,000.00</p>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                <h3 class="text-sm text-gray-400 mb-1">إجمالي الربح/خسارة</h3>
+                <p id="total_pnl" class="text-2xl font-bold text-blue-400">$0.00</p>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                <h3 class="text-sm text-gray-400 mb-1">عدد الصفقات</h3>
+                <p id="trade_count" class="text-2xl font-bold text-yellow-400">0</p>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                <h3 class="text-sm text-gray-400 mb-1">المراكز المفتوحة</h3>
+                <p id="active_positions" class="text-2xl font-bold text-purple-400">0</p>
+            </div>
+        </div>
+
+        <!-- Current Asset Info -->
+        <div class="grid grid-cols-3 gap-4 mb-6">
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                <h3 class="text-sm text-gray-400 mb-1">الأصل الحالي</h3>
+                <p id="symbol" class="text-xl font-bold">--</p>
+                <p id="price" class="text-2xl font-bold text-green-400">$--</p>
+                <div class="mt-2">
+                    <span class="text-xs text-gray-400">التقلب: </span>
+                    <span id="volatility" class="text-xs font-bold">--</span>
+                </div>
+                <div>
+                    <span class="text-xs text-gray-400">الاتجاه: </span>
+                    <span id="trend" class="text-xs font-bold">--</span>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                <h3 class="text-sm text-gray-400 mb-1">الحجم والتوقيت</h3>
+                <p id="volume" class="text-lg font-bold">--</p>
+                <p id="timestamp" class="text-xs text-gray-400 mt-2">--</p>
+                <div class="mt-2">
+                    <span class="text-xs text-gray-400">ميكروثانية: </span>
+                    <span id="timestamp_usec" class="text-xs font-bold">--</span>
+                </div>
+            </div>
+
+            <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                <h3 class="text-sm text-gray-400 mb-1">آخر إشارة تداول</h3>
+                <div id="latest_signal" class="mt-2">
+                    <p id="signal_symbol" class="text-sm font-bold">--</p>
+                    <p id="signal_type" class="text-lg font-bold">--</p>
+                    <p id="signal_reason" class="text-xs text-gray-400 mt-1">--</p>
+                    <div class="mt-2">
+                        <span class="text-xs text-gray-400">الثقة: </span>
+                        <span id="signal_confidence" class="text-xs font-bold">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Price Chart -->
+        <div class="bg-gray-800 p-4 rounded-lg border border-gray-700 mb-6">
+            <h3 class="text-lg font-bold mb-4">📈 الرسم البياني المباشر</h3>
+            <canvas id="priceChart" width="400" height="200"></canvas>
+        </div>
+
+        <!-- Recent Updates -->
+        <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+            <h3 class="text-lg font-bold mb-4">📊 آخر التحديثات</h3>
+            <div id="updates" class="space-y-1 max-h-48 overflow-y-auto">
+                <p class="text-gray-400 text-sm">في انتظار البيانات...</p>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let count = 0;
+        let priceChart;
+        let priceData = [];
+        let lastUpdateTime = 0;
+        let eventSource;
+
+        // Initialize Chart
+        function initChart() {
+            const ctx = document.getElementById('priceChart').getContext('2d');
+            priceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'السعر',
+                        data: [],
+                        borderColor: 'rgb(34, 197, 94)',
+                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            display: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: 'rgba(255, 255, 255, 0.7)' }
+                        },
+                        y: {
+                            display: true,
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            ticks: { color: 'rgba(255, 255, 255, 0.7)' }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: 'rgba(255, 255, 255, 0.9)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function formatTimestamp(sec, usec) {
+            const date = new Date(sec * 1000);
+            return date.toLocaleTimeString('ar-SA') + '.' + usec.toString().padStart(6, '0');
+        }
+
+        function updateChart(symbol, price, timestamp) {
+            if (!priceChart) return;
+            
+            const label = formatTimestamp(timestamp, 0);
+            
+            if (priceChart.data.labels.length > 20) {
+                priceChart.data.labels.shift();
+                priceChart.data.datasets[0].data.shift();
+            }
+            
+            priceChart.data.labels.push(label);
+            priceChart.data.datasets[0].data.push(price);
+            priceChart.update('none');
+        }
+
+        function connectToServer() {
+            // Use simple polling instead of WebSocket for now
+            fetchMarketData();
+            setInterval(fetchMarketData, 1000); // Poll every second
+        }
+
+        async function fetchMarketData() {
+            try {
+                // Simulate market data since we don't have a real endpoint
+                const assets = ['BTC', 'ETH', 'USDT', 'PUBG_UC', 'COD_POINTS', 'NETFLIX', 'SPOTIFY', 'VPN_PREMIUM', 'DOMAIN_COM', 'NFT_ART'];
+                const currentAsset = assets[count % assets.length];
+                
+                const mockData = {
+                    type: "market_data",
+                    data: {
+                        symbol: currentAsset,
+                        price: Math.random() * 100000,
+                        balance: 10000 + Math.random() * 5000,
+                        volume: Math.floor(Math.random() * 10000) + 1000,
+                        timestamp_sec: Math.floor(Date.now() / 1000),
+                        timestamp_usec: Math.floor(Math.random() * 1000000),
+                        volatility: Math.random() * 0.2,
+                        trend: Math.random()
+                    },
+                    trading_stats: {
+                        balance: 10000 + Math.random() * 5000,
+                        total_pnl: (Math.random() - 0.5) * 1000,
+                        trade_count: Math.floor(Math.random() * 100),
+                        active_positions: Math.floor(Math.random() * 10)
+                    }
+                };
+
+                processMarketData(mockData);
+                
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        }
+
+        function processMarketData(message) {
+            const currentTime = Date.now();
+            
+            if (lastUpdateTime > 0) {
+                const latency = currentTime - lastUpdateTime;
+                document.getElementById("latency").textContent = latency.toFixed(0);
+            }
+            lastUpdateTime = currentTime;
+
+            count++;
+            document.getElementById("count").textContent = count;
+
+            const data = message.data;
+            const stats = message.trading_stats;
+            
+            // Update asset info
+            document.getElementById("symbol").textContent = data.symbol;
+            document.getElementById("price").textContent = "$" + data.price.toFixed(6);
+            document.getElementById("volatility").textContent = (data.volatility * 100).toFixed(1) + "%";
+            document.getElementById("trend").textContent = (data.trend * 100).toFixed(1) + "%";
+            document.getElementById("volume").textContent = data.volume.toLocaleString('ar-SA');
+            document.getElementById("timestamp").textContent = formatTimestamp(data.timestamp_sec, data.timestamp_usec);
+            document.getElementById("timestamp_usec").textContent = data.timestamp_usec;
+            
+            // Update trading stats
+            document.getElementById("balance").textContent = "$" + stats.balance.toFixed(2);
+            document.getElementById("total_pnl").textContent = "$" + stats.total_pnl.toFixed(2);
+            document.getElementById("trade_count").textContent = stats.trade_count;
+            document.getElementById("active_positions").textContent = stats.active_positions;
+            
+            // Update chart
+            updateChart(data.symbol, data.price, data.timestamp_sec);
+            
+            // Add to updates
+            const updates = document.getElementById("updates");
+            const div = document.createElement("div");
+            div.className = "text-sm py-1 border-b border-gray-700";
+            div.innerHTML = `<span class="font-bold">${data.symbol}</span> - $${data.price.toFixed(6)} - تقلب: ${(data.volatility * 100).toFixed(1)}%`;
+            updates.prepend(div);
+            
+            // Keep only last 10 updates
+            while (updates.children.length > 10) {
+                updates.removeChild(updates.lastChild);
+            }
+
+            // Update status
+            document.getElementById("status").textContent = "متصل";
+            document.getElementById("status").className = "px-3 py-1 bg-green-500 rounded-full text-sm";
+        }
+
+        // Initialize
+        initChart();
+        connectToServer();
+        
+        console.log('🚀 لوحة تداول الأصول الرقمية جاهزة!');
+    </script>
+
+</body>
+</html>
