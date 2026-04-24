@@ -39,7 +39,7 @@ echo [4/5] Opening Trading Dashboard...
 cd ..
 start "" "http://localhost:8000"
 timeout /t 2 /nobreak >nul
-start "" "frontend\dynamic_dashboard.html"
+start "" "frontend\simple_dashboard.html"
 
 echo.
 echo [5/5] System Status Check...
@@ -50,7 +50,7 @@ echo ╔════════════════════════
 echo ║                    🎯 SYSTEM READY!                           ║
 echo ║                                                              ║
 echo ║  🌐 Trading Dashboard: http://localhost:8000                  ║
-echo ║  📊 Alternative: frontend\dynamic_dashboard.html              ║
+echo ║  📊 Alternative: frontend\simple_dashboard.html                 ║
 echo ║                                                              ║
 echo ║  💰 Features Active:                                          ║
 echo ║     • Real-Time Market Data                                   ║

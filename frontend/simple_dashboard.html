@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real Time Trading Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        }
+        .card {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border: 1px solid #475569;
+            backdrop-filter: blur(10px);
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            border: 1px solid #374151;
+        }
+        .price-up { color: #10b981; }
+        .price-down { color: #ef4444; }
+        .empty-chart {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .chart-line {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 40px;
+            background: #10b981;
+            border-radius: 2px;
+        }
+        .chart-dot {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            border: 2px solid #1e40af;
+        }
+        .chart-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        .chart-label {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(16, 185, 129, 0.2);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #10b981;
+        }
+        .chart-axis {
+            position: absolute;
+            left: 10px;
+            top: 10px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 12px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-900 text-white min-h-screen p-4">
+    <div class="max-w-7xl mx-auto">
+
+        <!-- Header -->
+        <div class="mb-6">
+            <h1 class="text-3xl font-bold text-center mb-2">Real Time Trading Dashboard</h1>
+            <div class="flex justify-center space-x-4 text-sm text-gray-400">
+                <span>الرصيد الحالي</span>
+                <span>إجمالي الصفقات المفتوحة</span>
+                <span>إجمالي الصفقات المغلقة</span>
+                <span>الربح/الخسارة الكلي</span>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-4 gap-4 mb-6">
+            <div class="stat-card p-4 rounded-lg shadow-lg">
+                <h3 class="text-gray-400 text-sm mb-1">الرصيد</h3>
+                <p id="balance" class="text-2xl font-bold text-green-400">$10,000.00</p>
+            </div>
+            <div class="stat-card p-4 rounded-lg shadow-lg">
+                <h3 class="text-gray-400 text-sm mb-1">إجمالي الصفقات المفتوحة</h3>
+                <p id="open_trades" class="text-2xl font-bold text-blue-400">10</p>
+            </div>
+            <div class="stat-card p-4 rounded-lg shadow-lg">
+                <h3 class="text-gray-400 text-sm mb-1">إجمالي الصفقات المغلقة</h3>
+                <p id="closed_trades" class="text-2xl font-bold text-yellow-400">18</p>
+            </div>
+            <div class="stat-card p-4 rounded-lg shadow-lg">
+                <h3 class="text-gray-400 text-sm mb-1">الربح/الخسارة الكلي</h3>
+                <p id="total_pnl" class="text-2xl font-bold text-purple-400">$218.21</p>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="grid grid-cols-3 gap-6 mb-6">
+            <!-- Current Asset Info -->
+            <div class="col-span-1">
+                <div class="card p-4 rounded-lg">
+                    <h3 class="text-lg font-bold mb-4">معلومات الأصول الحالية</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <p class="text-gray-400 text-sm">الأصل</p>
+                            <p id="symbol" class="text-xl font-bold">--</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-400 text-sm">السعر الحالي</p>
+                            <p id="price" class="text-2xl font-bold text-green-400">$--</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-400 text-sm">التغير</p>
+                            <p id="change" class="text-lg font-bold">--</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-400 text-sm">الحجم</p>
+                            <p id="volume" class="text-lg">--</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty Chart -->
+            <div class="col-span-2">
+                <div class="card p-4 rounded-lg">
+                    <h3 class="text-lg font-bold mb-4">الرسم البياني المباشر</h3>
+                    <div class="empty-chart rounded-lg" style="height: 300px;">
+                        <div class="chart-grid"></div>
+                        <div class="chart-label">Price</div>
+                        <div class="chart-axis">45,000</div>
+                        <div class="chart-line"></div>
+                        <div class="chart-dot"></div>
+                        <div class="absolute bottom-2 left-2 text-xs text-gray-400">BTC</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Current Asset Prices -->
+        <div class="card p-4 rounded-lg">
+            <h3 class="text-lg font-bold mb-4">أسعار الأصول الحالية</h3>
+            <div class="grid grid-cols-5 gap-4">
+                <div class="text-center">
+                    <p class="text-sm text-gray-400">BTC</p>
+                    <p id="btc_price" class="text-lg font-bold">$--</p>
+                    <p id="btc_change" class="text-sm">--</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-sm text-gray-400">ETH</p>
+                    <p id="eth_price" class="text-lg font-bold">$--</p>
+                    <p id="eth_change" class="text-sm">--</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-sm text-gray-400">USDT</p>
+                    <p id="usdt_price" class="text-lg font-bold">$--</p>
+                    <p id="usdt_change" class="text-sm">--</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-sm text-gray-400">COD_POINTS</p>
+                    <p id="cod_price" class="text-lg font-bold">$--</p>
+                    <p id="cod_change" class="text-sm">--</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-sm text-gray-400">DOMAIN_COM</p>
+                    <p id="domain_price" class="text-lg font-bold">$--</p>
+                    <p id="domain_change" class="text-sm">--</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status -->
+        <div class="mt-4 text-center">
+            <span id="status" class="px-3 py-1 bg-red-500 rounded-full text-sm">غير متصل</span>
+            <span class="ml-4 text-sm">التحديثات: <span id="count" class="font-bold">0</span></span>
+        </div>
+
+    </div>
+
+    <script>
+        let ws;
+        let count = 0;
+        let lastPrices = {};
+        let assetPrices = {
+            'BTC': 0,
+            'ETH': 0,
+            'USDT': 0,
+            'COD_POINTS': 0,
+            'DOMAIN_COM': 0
+        };
+
+        function formatTimestamp(sec, usec) {
+            const date = new Date(sec * 1000);
+            return date.toLocaleTimeString('ar-SA');
+        }
+
+        function updateAssetPrice(symbol, price) {
+            assetPrices[symbol] = price;
+            
+            const change = lastPrices[symbol] ? ((price - lastPrices[symbol]) / lastPrices[symbol] * 100) : 0;
+            lastPrices[symbol] = price;
+            
+            const priceElement = document.getElementById(symbol.toLowerCase() + '_price');
+            const changeElement = document.getElementById(symbol.toLowerCase() + '_change');
+            
+            if (priceElement) {
+                priceElement.textContent = '$' + price.toFixed(6);
+            }
+            
+            if (changeElement) {
+                changeElement.textContent = (change >= 0 ? '+' : '') + change.toFixed(2) + '%';
+                changeElement.className = change >= 0 ? 'text-sm price-up' : 'text-sm price-down';
+            }
+        }
+
+        function connect() {
+            ws = new WebSocket("ws://localhost:8000");
+
+            ws.onopen = () => {
+                document.getElementById("status").textContent = "متصل";
+                document.getElementById("status").className = "px-3 py-1 bg-green-500 rounded-full text-sm";
+                console.log("Connected to trading server");
+            };
+
+            ws.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                
+                count++;
+                document.getElementById("count").textContent = count;
+
+                if (message.type === "market_data") {
+                    const data = message.data;
+                    const stats = message.trading_stats;
+
+                    // Update current asset
+                    document.getElementById("symbol").textContent = data.symbol;
+                    document.getElementById("price").textContent = "$" + data.price.toFixed(6);
+                    document.getElementById("volume").textContent = data.volume.toLocaleString();
+
+                    // Update stats
+                    document.getElementById("balance").textContent = "$" + stats.balance.toFixed(2);
+                    document.getElementById("total_pnl").textContent = "$" + stats.total_pnl.toFixed(2);
+                    document.getElementById("open_trades").textContent = stats.active_positions;
+                    document.getElementById("closed_trades").textContent = stats.trade_count;
+
+                    // Update all asset prices
+                    updateAssetPrice(data.symbol, data.price);
+                }
+                else if (message.type === "trading_signal") {
+                    const signal = message.data;
+                    console.log("Trading signal:", signal);
+                }
+            };
+
+            ws.onclose = () => {
+                document.getElementById("status").textContent = "غير متصل";
+                document.getElementById("status").className = "px-3 py-1 bg-red-500 rounded-full text-sm";
+                setTimeout(connect, 3000);
+            };
+
+            ws.onerror = (error) => {
+                console.error("WebSocket error:", error);
+            };
+        }
+
+        // Initialize
+        connect();
+    </script>
+
+</body>
+</html>
