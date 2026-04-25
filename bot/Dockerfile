@@ -1,22 +1,23 @@
 FROM gcc:latest
 
 WORKDIR /app
-
-# Install required packages
+# تثبيت الأدوات المساعدة (مفيد جداً للتنقيح Debugging)
 RUN apt-get update && apt-get install -y \
     make \
-    netcat \
+    netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy source files
-COPY market_bot.c .
-COPY Makefile .
+# نسخ جميع ملفات المشروع (الكود والميك فايل)
+COPY . .
 
-# Build the application
+# خيار 1: إذا كان الـ Makefile جاهزاً، استخدمه:
+# RUN make
+
+# خيار 2: التجميع اليدوي (تأكد من ترتيب المكتبات)
 RUN gcc -Wall -Wextra -std=c99 -o market_bot market_bot.c -lpthread
 
-# Expose port
+# فتح المنفذ المطلوبة
 EXPOSE 8080
 
-# Run the application
+# تشغيل البوت
 CMD ["./market_bot"]
